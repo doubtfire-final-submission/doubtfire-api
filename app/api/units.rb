@@ -311,5 +311,25 @@ module Api
 
       unit.tutor_assessment_csv
     end
+
+    desc 'Count the tasks with status Ready to Mark'
+    get '/units/:id/stats/task_ready_to_mark_stats' do
+      unit = Unit.find(params[:id])
+      unless authorise? current_user, unit, :ready_to_mark_stats
+        error!({ error: "Not authorised to view statistics for #{unit.code}" }, 403)
+      end
+
+      unit.task_status_ready_to_mark
+    end
+
+    desc 'Task assessment date with unit_role_id & count'
+    get '/units/:id/stats/task_assessment_date' do 
+      unit = Unit.find(params[:id])
+      unless authorise? current_user, unit, :ready_to_mark_stats
+        error!({ error: "Not authorised to view statistics for #{unit.code}" }, 403)
+      end
+
+      unit.tutor_task_assessment
+    end
   end
 end
