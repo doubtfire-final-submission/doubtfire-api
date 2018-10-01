@@ -28,7 +28,9 @@ class Unit < ActiveRecord::Base
       :provide_feedback,
       :download_stats,
       :download_unit_csv,
-      :download_grades
+      :download_grades,
+      :ready_to_mark_stats,
+      :assessment_date_chart
     ]
 
     # What can convenors do with units?
@@ -45,7 +47,9 @@ class Unit < ActiveRecord::Base
       :provide_feedback,
       :change_project_enrolment,
       :download_stats,
-      :download_grades
+      :download_grades,
+      :ready_to_mark_stats,
+      :assessment_date_chart
     ]
 
     # What can other users do with units?
@@ -1430,6 +1434,7 @@ class Unit < ActiveRecord::Base
       }
     end
 
+    
     # Calculate not started...
     tutorials.each do |t|
       task_definitions.each do |td|
@@ -1464,6 +1469,30 @@ class Unit < ActiveRecord::Base
     end
 
     result
+  end
+
+  #
+  # Count the task with status id: 9 i.e, "Ready to Mark"
+  # Count Max(assessment_date) & Min(submission_date) CASE when task_status_id = 2 OR 9
+  #
+  def task_status_ready_to_mark
+    data = student_tasks
+        .joins(project: [{tutorial: {unit_role: :user}}])
+        .where("task_status_id = 9")
+        .group("task_status_id", "tutorials.unit_role_id","users.id","projects.tutorial_id")
+        .select("unit_role_id AS id","projects.tutorial_id AS tutorial_id","concat(first_name,' ',last_name) AS full_name","count(unit_role_id) AS count","task_status_id AS task_id","(CASE WHEN task_Status_id=2 OR task_status_id=9 THEN MIN(submission_date) ELSE MIN(submission_date) END) AS submission_date","(CASE WHEN task_Status_id=2 OR task_status_id=9 THEN MAX(assessment_date) ELSE MAX(assessment_date) END) AS assessment_date")
+        .map{|r| {tutorial_id: r.tutorial_id, role_id: r.id, name: r.full_name, count: r.count,task_status_id: r.task_id, submission_date: r.submission_date, assessment_date: r.submission_date}}
+  end
+
+  #
+  # Return assessment_date and count
+  #
+  def tutor_task_assessment
+    data = student_tasks
+    .joins(project: [{tutorial: {unit_role: :user}}])
+    .group("tasks.assessment_date","unit_role_id")
+    .select("distinct(assessment_date) AS assessment_date","unit_role_id AS unit_role_id","count(assessment_date) AS count")
+    .map{ |r| {assessment_date: r.assessment_date, unit_role_id: r.unit_role_id, count: r.count} }
   end
 
   #
