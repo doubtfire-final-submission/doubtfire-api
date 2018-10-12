@@ -28,6 +28,7 @@ group :development, :test do
   gem 'rails_best_practices'
   gem 'thin'
   gem 'rubocop', '0.46.0'
+  gem 'awesome_print'
 end
 
 group :development, :test, :staging, :replica do
